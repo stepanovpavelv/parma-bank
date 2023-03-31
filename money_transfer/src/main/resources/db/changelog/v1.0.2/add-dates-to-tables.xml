@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
+
+    <changeSet id="add-dates-to-tables" author="StepanovPV">
+        <addColumn tableName="bank_accounts">
+            <column name="create_date" type="timestamp with time zone" remarks="Дата создания" />
+        </addColumn>
+        <addColumn tableName="bank_accounts">
+            <column name="update_date" type="timestamp with time zone" remarks="Дата обновления" />
+        </addColumn>
+        <addColumn tableName="operations">
+            <column name="update_date" type="timestamp with time zone" remarks="Дата обновления" />
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="bank_accounts" columnName="create_date" />
+            <dropColumn tableName="bank_accounts" columnName="update_date" />
+            <dropColumn tableName="operations" columnName="update_date" />
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

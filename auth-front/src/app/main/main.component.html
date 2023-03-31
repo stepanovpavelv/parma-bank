@@ -1,0 +1,17 @@
+<p>Вы успешно залогинились!</p>
+
+<div>
+    <p>Используйте id-токен ниже для доступа через сваггер:</p>
+    <br>
+    <div>
+        <label class="token" name="id_token_field">{{ idTokenHint }}</label>
+    </div>
+
+    <p>Используйте access-токен ниже для доступа через сваггер:</p>
+    <br>
+    <div>
+        <label class="token" name="access_token_field">{{ accessTokenHint }}</label>
+    </div>
+</div>
+
+<button (click)="logout()">Выйти</button>

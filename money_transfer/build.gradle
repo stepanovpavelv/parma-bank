@@ -1,0 +1,68 @@
+plugins {
+	id 'org.springframework.boot' version '2.7.5'
+	id 'io.spring.dependency-management' version '1.1.0'
+	id 'java'
+}
+
+group = 'parma.edu'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+//mapstructVersion = ''
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'org.springframework.security:spring-security-config'
+	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-oauth2-resource-server
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+	// https://mvnrepository.com/artifact/org.liquibase/liquibase-core
+	implementation group: 'org.liquibase', name: 'liquibase-core', version: '4.19.0'
+	// https://mvnrepository.com/artifact/org.mapstruct/mapstruct
+	implementation group: 'org.mapstruct', name: 'mapstruct', version: '1.5.3.Final'
+	// https://mvnrepository.com/artifact/io.springfox/springfox-boot-starter
+	implementation group: 'io.springfox', name: 'springfox-boot-starter', version: '3.0.0'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	// https://mvnrepository.com/artifact/org.springframework.kafka/spring-kafka
+	implementation group: 'org.springframework.kafka', name: 'spring-kafka', version: '2.9.2'
+	// https://mvnrepository.com/artifact/org.springframework.kafka/spring-kafka-test
+	testImplementation group: 'org.springframework.kafka', name: 'spring-kafka-test', version: '2.9.2'
+	// https://mvnrepository.com/artifact/org.awaitility/awaitility
+	testImplementation group: 'org.awaitility', name: 'awaitility', version: '4.1.1'
+
+	compileOnly 'org.projectlombok:lombok'
+	runtimeOnly 'org.postgresql:postgresql'
+	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor group: 'org.mapstruct', name: 'mapstruct-processor', version: '1.5.3.Final'
+	annotationProcessor group: 'org.projectlombok', name: 'lombok-mapstruct-binding', version: '0.2.0'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	// https://mvnrepository.com/artifact/com.h2database/h2
+	testImplementation 'com.h2database:h2:2.1.214'
+}
+
+task javaHomeEV {
+	onlyIf {
+		System.getenv('JAVA_HOME') != null
+	}
+	doLast {
+		println 'Java Home is present'
+	}
+}
+
+compileJava.dependsOn(javaHomeEV)
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

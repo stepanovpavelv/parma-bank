@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
+
+    <changeSet id="add-activity-status" author="StepanovPV">
+        <addColumn tableName="activity_history">
+            <column name="operation_status_id" type="int" remarks="Идентификатор статуса операции" >
+                <constraints nullable="true" foreignKeyName="activity_status_id_key" references="operation_statuses(id)" />
+            </column>
+        </addColumn>
+
+        <!-- Возможность отката изменений транзакции -->
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="activity_history" constraintName="activity_status_id_key" />
+            <dropColumn tableName="activity_history" columnName="operation_status_id" />
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

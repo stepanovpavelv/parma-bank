@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
+
+    <changeSet id="create-tables-reporting" author="StepanovPV">
+        <!-- 1 -->
+        <createTable tableName="operation_types" remarks="Типы операций">
+            <column name="id" type="int" remarks="Уникальный идентификатор записи">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(30)" remarks="Название операции">
+                <constraints nullable="false" />
+            </column>
+            <column name="is_expense" type="boolean" defaultValueBoolean="false" remarks="Является ли операция расходной">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <!-- 2 -->
+        <createTable tableName="operation_statuses" remarks="Статусы операций">
+            <column name="id" type="int" remarks="Уникальный идентификатор записи">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(30)" remarks="Название статуса">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <!-- 3 -->
+        <createTable tableName="bank_accounts" remarks="Банковские счета (кошельки пользователей)">
+            <column name="id" type="int" remarks="Уникальный идентификатор записи">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="int" remarks="Идентификатор пользователя">
+                <constraints nullable="false" />
+            </column>
+            <column name="is_enabled" type="boolean" remarks="Признак активности счета">
+                <constraints nullable="false" />
+            </column>
+            <column name="create_date" type="timestamp with time zone" remarks="Дата создания">
+                <constraints nullable="false" />
+            </column>
+            <column name="update_date" type="timestamp with time zone" remarks="Дата обновления" />
+        </createTable>
+        <!-- 4 -->
+        <createTable tableName="account_details" remarks="Средства на банковском счете на дату">
+            <column name="id" type="int" remarks="Уникальный идентификатор записи">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="bank_account_id" type="int" remarks="Идентификатор банковского счета">
+                <constraints nullable="false" foreignKeyName="details_bank_account_id" references="bank_accounts(id)" />
+            </column>
+            <column name="actual_date" type="timestamp with time zone" remarks="Дата актуальности средств">
+                <constraints nullable="false" />
+            </column>
+            <column name="amount" type="float" remarks="Размер средств на дату">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <!-- 5 -->
+        <createTable tableName="operations" remarks="Банковские операции">
+            <column name="id" type="int" remarks="Уникальный идентификатор записи">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="account_source_id" type="int" remarks="Идентификатор счета, выполняющего операцию (источник)">
+                <constraints nullable="false" foreignKeyName="operations_bank_source_account_id" references="bank_accounts(id)" />
+            </column>
+            <column name="account_target_id" type="int" remarks="Идентификатор счета другого пользователя (для зачисления средств)">
+                <constraints nullable="true" foreignKeyName="operations_bank_target_account_id" references="bank_accounts(id)" />
+            </column>
+            <column name="operation_type_id" type="int" remarks="Идентификатор типа операции">
+                <constraints nullable="false" foreignKeyName="operations_operation_type_id" references="operation_types(id)" />
+            </column>
+            <column name="date" type="timestamp with time zone" remarks="Дата и время совершения операции">
+                <constraints nullable="false" />
+            </column>
+            <column name="update_date" type="timestamp with time zone" remarks="Дата обновления" />
+            <column name="amount" type="float" remarks="Размер средств по операции">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <!-- 6 -->
+        <createTable tableName="operation_status_history" remarks="История изменений статусов банковских операций">
+            <column name="id" type="int" remarks="Уникальный идентификатор записи">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="operation_id" type="int" remarks="Идентификатор операции">
+                <constraints nullable="false" foreignKeyName="operation_status_operation_id" references="operations(id)" />
+            </column>
+            <column name="status_id" type="int" remarks="Статус операции">
+                <constraints nullable="false" foreignKeyName="operation_status_status_id" references="operation_statuses(id)" />
+            </column>
+            <column name="date" type="timestamp with time zone" remarks="Дата и время изменения статуса">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <!-- 7 -->
+        <createSequence sequenceName="activity_history_id_seq" incrementBy="1" minValue="1" />
+
+        <createTable tableName="activity_history" remarks="История банковских операций">
+            <column name="id" type="int" defaultValueSequenceNext="activity_history_id_seq" remarks="Уникальный идентификатор записи">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="operation_id" type="int" remarks="Идентификатор операции">
+                <constraints nullable="false" foreignKeyName="activity_operation_status_operation_id" references="operations(id)" />
+            </column>
+            <column name="operation_type_id" type="int" remarks="Идентификатор типа операции">
+                <constraints nullable="false" foreignKeyName="activity_operations_operation_type_id" references="operation_types(id)" />
+            </column>
+            <column name="user_source_id" type="int" remarks="Идентификатор пользователя, совершавшего операцию">
+                <constraints nullable="false" />
+            </column>
+            <column name="user_source_login" type="varchar(20)" remarks="Логин пользователя, совершавшего операцию" />
+            <column name="user_target_id" type="int" remarks="Идентификатор другого пользователя, являющегося адресатом операции" />
+            <column name="user_target_login" type="varchar(20)" remarks="Логин другого пользователя, являющегося адресатом операции" />
+            <column name="account_source_id" type="int" remarks="Идентификатор счета, выполняющего операцию (источник)">
+                <constraints nullable="false" foreignKeyName="activity_operations_bank_source_account_id" references="bank_accounts(id)" />
+            </column>
+            <column name="account_target_id" type="int" remarks="Идентификатор счета другого пользователя, являющегося адресатом операции">
+                <constraints nullable="true" foreignKeyName="activity_operations_bank_target_account_id" references="bank_accounts(id)" />
+            </column>
+            <column name="date" type="timestamp with time zone" remarks="Дата и время совершения операции">
+                <constraints nullable="false" />
+            </column>
+            <column name="update_date" type="timestamp with time zone" remarks="Дата и время обновления операции" />
+            <column name="amount" type="float" remarks="Размер средств по операции">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <!-- 8 -->
+        <createSequence sequenceName="balancing_history_id_seq" incrementBy="1" minValue="1" />
+
+        <createTable tableName="balancing_history" remarks="История изменения баланса счета (кошелька)">
+            <column name="id" type="int" defaultValueSequenceNext="balancing_history_id_seq" remarks="Уникальный идентификатор записи">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="bank_account_id" type="int" remarks="Идентификатор счета">
+                <constraints nullable="false" foreignKeyName="history_bank_source_account_id" references="bank_accounts(id)" />
+            </column>
+            <column name="user_id" type="int" remarks="Идентификатор пользователя счета (кошелька)">
+                <constraints nullable="false" />
+            </column>
+            <column name="user_login" type="varchar(20)" remarks="Логин пользователя счета (кошелька)" />
+            <column name="date" type="timestamp with time zone" remarks="Дата и время актуальности средств">
+                <constraints nullable="false" />
+            </column>
+            <column name="amount" type="float" remarks="Размер средств">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <!-- Возможность отката изменений транзакции -->
+        <rollback>
+            <dropTable tableName="activity_history" />
+            <dropTable tableName="balancing_history" />
+            <dropTable tableName="operation_status_history" />
+            <dropTable tableName="operations" />
+            <dropTable tableName="account_details" />
+            <dropTable tableName="bank_accounts" />
+            <dropTable tableName="operation_statuses" />
+            <dropTable tableName="operation_types" />
+        </rollback>
+
+    </changeSet>
+</databaseChangeLog>

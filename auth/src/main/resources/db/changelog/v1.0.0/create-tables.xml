@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
+
+    <changeSet id="create-tables-auth" author="StepanovPV">
+        <createSequence sequenceName="users_id_seq" incrementBy="1" minValue="1" />
+
+        <createTable tableName="users" remarks="Пользователи системы">
+            <column name="id" type="int" defaultValueSequenceNext="users_id_seq" remarks="Уникальный идентификатор записи">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="login" type="varchar(20)" remarks="Логин">
+                <constraints nullable="false" />
+            </column>
+            <column name="password" type="varchar(150)" remarks="Пароль пользователя">
+                <constraints nullable="true" />
+            </column>
+            <column name="full_name" type="varchar(100)" remarks="Полные ФИО пользователя">
+                <constraints nullable="false" />
+            </column>
+            <column name="role" type="varchar(15)" remarks="Назначенная роль">
+                <constraints nullable="false" />
+            </column>
+            <column name="is_enabled" type="boolean" remarks="Признак отключения аккаунта">
+                <constraints nullable="false" />
+            </column>
+            <column name="locked" type="boolean" remarks="Признак блокировки аккаунта">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <!-- Возможность отката изменений транзакции -->
+        <rollback>
+            <dropTable tableName="users" />
+        </rollback>
+
+    </changeSet>
+</databaseChangeLog>

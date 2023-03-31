@@ -1,0 +1,13 @@
+.token {
+    width: 150px;
+    max-width: 150px;
+    height: auto;
+    outline: 2px solid black;
+    margin: 10px;
+    padding: 10px;
+    word-wrap: break-word;
+}
+
+button {
+    margin-top: 30px;
+}

@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  report_app:
+    container_name: app_report
+    image: docker-spring-boot-postgres:latest
+    build:
+      context: .
+      dockerfile: context/app/Dockerfile
+    ports:
+      - "8081:8081"
+    networks:
+      - reporting_network
+    depends_on:
+      - report_db
+    environment:
+      - TZ=UTC
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://report_db:5433/bank_reports
+      - SPRING_DATASOURCE_USERNAME=reporting_sa
+      - SPRING_DATASOURCE_PASSWORD=sa123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+
+  report_db:
+    container_name: money_report_db
+    image: debezium/postgres:12
+    environment:
+      POSTGRES_USER: reporting_sa
+      POSTGRES_PASSWORD: sa123
+      POSTGRES_DB: bank_reports
+    ports:
+      - "5433:5432"
+    networks:
+      - reporting_network
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+
+  pgadmin:
+    container_name: report_pgadmin4
+    image: dpage/pgadmin4:latest
+    restart: always
+    ports:
+      - "5051:80"
+    networks:
+      - reporting_network
+    environment:
+      PGADMIN_DEFAULT_EMAIL: edu@parma.ru
+      PGADMIN_DEFAULT_PASSWORD: admin
+
+networks:
+  reporting_network:
+    name: banking_bridge
+    external: true
+
+# сделать один проект с модулями

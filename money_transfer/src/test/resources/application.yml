@@ -1,0 +1,40 @@
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  balancer:
+    secret: test
+  datasource:
+    url: jdbc:h2:mem:banking_tests;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+    driver-class-name: org.h2.Driver
+    username: test_sa
+    password: 123
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      client-id: producerServer
+    consumer:
+      client-id: consumerServer
+      group-id: server.operation.broadcast
+  security:
+    oauth2:
+      client:
+        uri: http://127.0.0.1:4200
+      resourceserver:
+        user:
+          timeout: 5000
+          schedule:
+            cron: '0 0 */1 * * *' # частота обновления кэша пользователей
+        jwt:
+          issuer-uri: http://localhost:8082
+
+bank-exception:
+  concat-length: 2000
+
+additional-kafka:
+  operation:
+    topic: operation_junit_test
+  bank_account:
+    topic: bank_account_junit_test

@@ -1,0 +1,43 @@
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+  balancer:
+    secret: ${SPRING_BALANCING_SECRET}
+  datasource:
+    url: jdbc:postgresql://transfer_db:5432/bank_money_transfer
+    username: money_transfer_sa
+    password: sa123
+    driver-class-name: org.postgresql.Driver
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+  kafka:
+    bootstrap-servers: kafka:29092
+    consumer:
+      group-id: server.operation.broadcast
+      client-id: consumerServer
+    producer:
+      client-id: producerServer
+  security:
+    oauth2:
+      client:
+        uri: http://127.0.0.1:4200
+      resourceserver:
+        user:
+          timeout: 5000
+          schedule:
+            cron: '0 0 */1 * * *' # частота обновления кэша пользователей
+        jwt:
+          issuer-uri: http://auth:8082
+
+bank-exception:
+  concat-length: 2000
+
+additional-kafka:
+  operation:
+    topic: operation
+  bank_account:
+    topic: bank_account

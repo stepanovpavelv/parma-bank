@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
+
+    <changeSet id="add-operation-unique-constraints" author="StepanovPV">
+        <addUniqueConstraint tableName="activity_history"
+                             columnNames="operation_id"
+                             constraintName="operation_id_uq" />
+
+        <!-- Возможность отката изменений транзакции -->
+        <rollback>
+            <dropUniqueConstraint tableName="activity_history" constraintName="operation_id_uq" />
+        </rollback>
+
+    </changeSet>
+</databaseChangeLog>

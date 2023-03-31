@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
+
+    <changeSet id="fill-in-tables-money-transfer" author="StepanovPV">
+        <sql>
+            INSERT INTO operation_types(id, name) VALUES(1, 'Пополнение'), (2, 'Перевод пользователю'), (3, 'Вывод средств');
+            INSERT INTO operation_statuses(id, name) VALUES(1, 'Создана'), (2, 'Обрабатывается банком'), (3, 'Исполнена');
+        </sql>
+
+        <rollback>
+            <delete tableName="operation_types" />
+            <delete tableName="operation_statuses" />
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

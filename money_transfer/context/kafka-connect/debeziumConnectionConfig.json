@@ -1,0 +1,20 @@
+{
+  "name": "source-connector",
+  "config": {
+    "snapshot.mode": "always",
+    "topic.prefix": "bankmoney",
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "plugin.name": "pgoutput",
+    "database.hostname": "transfer_db",
+    "database.port": "5432",
+    "database.user": "debezium",
+    "database.password": "debezium",
+    "database.dbname" : "bank_money_transfer",
+    "database.server.name": "money_transfer_db",
+    "publication.autocreate.mode": "filtered",
+    "schema.include.list": "public",
+    "table.include.list": "public.operation_types,public.operation_statuses,public.bank_accounts,public.account_details,public.operations,public.operation_status_history",
+    "heartbeat.interval.ms": "5000",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter"
+  }
+}

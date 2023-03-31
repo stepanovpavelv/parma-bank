@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
+
+    <changeSet id="add-expense-column" author="StepanovPV">
+        <addColumn tableName="operation_types">
+            <column name="is_expense" type="boolean" defaultValueBoolean="false" remarks="Является ли операция расходной" />
+        </addColumn>
+
+        <update tableName="operation_types">
+            <column name="is_expense" value="true" />
+            <where>id IN (2, 3)</where>
+        </update>
+
+        <rollback>
+            <dropColumn tableName="operation_types" columnName="is_expense" />
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

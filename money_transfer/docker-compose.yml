@@ -1,0 +1,117 @@
+version: "3.9"
+
+services:
+  app:
+    container_name: app
+    image: docker-spring-boot-postgres:latest
+    build:
+      context: .
+      dockerfile: context/app/Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - banking_network
+    depends_on:
+      - db
+    environment:
+      - TZ=UTC
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/bank_money_transfer
+      - SPRING_DATASOURCE_USERNAME=money_transfer_sa
+      - SPRING_DATASOURCE_PASSWORD=sa123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+
+  db:
+    container_name: money_transfer_db
+    image: debezium/postgres:12
+    environment:
+      POSTGRES_USER: money_transfer_sa
+      POSTGRES_PASSWORD: sa123
+      POSTGRES_DB: bank_money_transfer
+    ports:
+      - "5432:5432"
+    networks:
+      - banking_network
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+    volumes:
+      - ./context/database/init.sql:/docker-entrypoint-initdb.d/db.sql
+
+  pgadmin:
+    container_name: pgadmin4
+    image: dpage/pgadmin4:latest
+    restart: always
+    ports:
+      - "5050:80"
+    networks:
+      - banking_network
+    environment:
+      PGADMIN_DEFAULT_EMAIL: edu@parma.ru
+      PGADMIN_DEFAULT_PASSWORD: admin
+
+  zookeeper:
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper:latest
+    ports:
+      - "2181:2181"
+    networks:
+      - banking_network
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    container_name: kafka
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    networks:
+      - banking_network
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  kafdrop:
+    container_name: kafdrop
+    image: obsidiandynamics/kafdrop:latest
+    ports:
+      - "9000:9000"
+    networks:
+      - banking_network
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKERCONNECT: kafka:29092
+      JVM_OPTS: -Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify
+
+  kafkaconnect:
+    container_name: kafkaconnect
+    image: debezium/connect-jdbc:2.0
+    build:
+      context: .
+      dockerfile: ./context/kafka-connect/Dockerfile
+    ports:
+      - "8083:8083"
+    networks:
+      - banking_network
+    environment:
+      GROUP_ID: 1
+      BOOTSTRAP_SERVERS: kafka:29092
+      CONFIG_STORAGE_TOPIC: my_connect_configs
+      OFFSET_STORAGE_TOPIC: my_connect_offsets
+      STATUS_STORAGE_TOPIC: my_connect_statuses
+      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+
+networks:
+  banking_network:
+    name: banking_bridge

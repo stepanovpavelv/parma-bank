@@ -1,0 +1,22 @@
+server:
+  port: 8082
+
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://auth_db:5434/bank_auth
+    username: auth_sa
+    password: sa123
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+  security:
+    issuer: http://auth:8082
+    client:
+      id: client
+      secret: secret
+      redirect:
+        auth: http://127.0.0.1:4200/authorized
+        logout: http://127.0.0.1:4200/home

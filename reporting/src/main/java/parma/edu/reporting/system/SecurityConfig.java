@@ -1,0 +1,57 @@
+package parma.edu.reporting.system;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+
+import java.util.List;
+
+@Configuration
+public class SecurityConfig {
+    private static final String[] SWAGGER_ENDPOINTS = new String[] {
+            "/v2/api-docs",
+            "/swagger.json",
+            "/swagger-resources",
+            "/swagger-resources/**",
+            "/configuration/ui",
+            "/configuration/security",
+            "/swagger-ui.html",
+            "/webjars/**",
+            "/v3/api-docs/**",
+            "/swagger-ui/**" // other public endpoints of your API may be appended to this array
+    };
+
+    @Value("${spring.security.oauth2.client.uri}")
+    private String clientUrl;
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.cors(c -> {
+            CorsConfigurationSource source = s -> {
+                CorsConfiguration cc = new CorsConfiguration();
+                cc.setAllowCredentials(true);
+                cc.setAllowedOrigins(List.of(clientUrl));
+                cc.setAllowedHeaders(List.of("*"));
+                cc.setAllowedMethods(List.of("*"));
+                return cc;
+            };
+
+            c.configurationSource(source);
+        });
+
+        http
+                .authorizeRequests().antMatchers(SWAGGER_ENDPOINTS).permitAll()
+                .anyRequest()
+                .authenticated().and()
+                .oauth2ResourceServer()
+                .jwt();
+
+        return http.build();
+    }
+}
+
+// http://localhost:8082/oauth2/authorize?response_type=code&client_id=client&scope=openid&redirect_uri=http://localhost:4200/authorized&code_challenge=QYPAZ5NU8yvtlQ9erXrUYR-T5AGCjCF47vN-KsaI2A8&code_challenge_method=S256

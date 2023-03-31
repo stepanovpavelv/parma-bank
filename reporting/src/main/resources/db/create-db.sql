@@ -1,0 +1,5 @@
+CREATE ROLE reporting_sa WITH LOGIN PASSWORD 'sa123';
+ALTER ROLE reporting_sa WITH SUPERUSER;
+ALTER ROLE reporting_sa WITH CREATEDB;
+
+CREATE DATABASE "bank_reports" WITH OWNER reporting_sa;
