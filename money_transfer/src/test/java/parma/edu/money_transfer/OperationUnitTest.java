@@ -1,31 +1,21 @@
 package parma.edu.money_transfer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.listener.KafkaMessageListenerContainer;
-import org.springframework.kafka.listener.MessageListener;
-import org.springframework.kafka.test.context.EmbeddedKafka;
-import org.springframework.kafka.test.utils.ContainerTestUtils;
 import parma.edu.money_transfer.dto.*;
 import parma.edu.money_transfer.model.enums.OperationState;
 import parma.edu.money_transfer.service.ActualDetailsService;
 import parma.edu.money_transfer.service.BankAccountService;
 import parma.edu.money_transfer.service.OperationService;
 
+import static org.awaitility.Awaitility.await;
 import static parma.edu.money_transfer.exception.BankingException.NotFoundException;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -40,9 +30,6 @@ public class OperationUnitTest extends AbstractTest {
     private final static int TRANSFER_OPERATION_TYPE = 2;
     private final static int WITHDRAW_OPERATION_TYPE = 3;
 
-    @Value("${additional-kafka.operation.topic}")
-    private String topicName;
-
     @Autowired
     private OperationService operationService;
     @Autowired
@@ -50,24 +37,23 @@ public class OperationUnitTest extends AbstractTest {
     @Autowired
     private ActualDetailsService actualDetailsService;
 
-    @BeforeAll
-    public void init() {
-        this.initBaseProperties(topicName);
-    }
-
     //@BeforeAll
     //@ValueSource(ints = {1,2,3})
     @ParameterizedTest
     @MethodSource("userIdProvider")
     @DisplayName("Creating accounts for users")
     @Order(0)
-    public void createTestBankAccounts(int userId) throws InterruptedException {
+    public void createTestBankAccounts(int userId) {
         this.initUserServiceMockObject(userId);
         BankAccountDto bankAccount = bankAccountService.createBankAccount(userId);
         Assertions.assertNotNull(bankAccount);
         Assertions.assertEquals(userId, bankAccount.getUserId());
         Assertions.assertTrue(bankAccount.getIsEnabled());
-        Thread.sleep(500);
+
+        await()
+                .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL_MS, TimeUnit.MILLISECONDS)
+                .until(() -> !bankAccountService.getAccountsByUserId(userId).isEmpty());
     }
 
     @Test
@@ -83,17 +69,14 @@ public class OperationUnitTest extends AbstractTest {
 
         operation.setId(operationService.createOperation(operation));
 
-        try {
-            ConsumerRecord<Integer, String> message = records.poll(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            Assertions.assertNotNull(message);
+        await()
+                .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL_MS, TimeUnit.MILLISECONDS)
+                .until(() -> !operationService.getOperationByIds(List.of(operation.getId())).isEmpty());
 
-            OperationDto kafkaOperation = mapper.readValue(message.value(), OperationDto.class);
-            Assertions.assertNotNull(kafkaOperation);
-            Assertions.assertEquals(sum, kafkaOperation.getAmount());
-            Thread.sleep(1000);
-        } catch (InterruptedException | JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        OperationDto messageDto = operationService.getOperationByIdWithDto(operation.getId());
+        Assertions.assertNotNull(messageDto);
+        Assertions.assertEquals(sum, messageDto.getAmount());
 
         // по операции должны быть только 3 статуса: создана, принята, отклонена
         OperationDetailsDto operationDetails = operationService.getStatusHistoryByOperationId(operation.getId());
@@ -118,16 +101,14 @@ public class OperationUnitTest extends AbstractTest {
 
         operation.setId(operationService.createOperation(operation));
 
-        try {
-            ConsumerRecord<Integer, String> message = records.poll(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            Assertions.assertNotNull(message);
+        await()
+                .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL_MS, TimeUnit.MILLISECONDS)
+                .until(() -> !operationService.getOperationByIds(List.of(operation.getId())).isEmpty());
 
-            OperationDto kafkaOperation = mapper.readValue(message.value(), OperationDto.class);
-            Assertions.assertNotNull(kafkaOperation);
-            Assertions.assertEquals(sum, kafkaOperation.getAmount());
-        } catch (InterruptedException | JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        OperationDto messageDto = operationService.getOperationByIdWithDto(operation.getId());
+        Assertions.assertNotNull(messageDto);
+        Assertions.assertEquals(sum, messageDto.getAmount());
 
         // чекаем историю операций
         final int index = 1;
@@ -165,16 +146,14 @@ public class OperationUnitTest extends AbstractTest {
 
         operation.setId(operationService.createOperation(operation));
 
-        try {
-            ConsumerRecord<Integer, String> message = records.poll(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            Assertions.assertNotNull(message);
+        await()
+                .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL_MS, TimeUnit.MILLISECONDS)
+                .until(() -> !operationService.getOperationByIds(List.of(operation.getId())).isEmpty());
 
-            OperationDto kafkaOperation = mapper.readValue(message.value(), OperationDto.class);
-            Assertions.assertNotNull(kafkaOperation);
-            Assertions.assertEquals(transferSum, kafkaOperation.getAmount());
-        } catch (InterruptedException | JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        OperationDto messageDto = operationService.getOperationByIdWithDto(operation.getId());
+        Assertions.assertNotNull(messageDto);
+        Assertions.assertEquals(transferSum, messageDto.getAmount());
 
         final int index = 2;
         // чекаем историю операций
@@ -243,17 +222,14 @@ public class OperationUnitTest extends AbstractTest {
 
         operation.setId(operationService.createOperation(operation));
 
-        try {
-            ConsumerRecord<Integer, String> message = records.poll(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            Assertions.assertNotNull(message);
+        await()
+                .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL_MS, TimeUnit.MILLISECONDS)
+                .until(() -> !operationService.getOperationByIds(List.of(operation.getId())).isEmpty());
 
-            OperationDto kafkaOperation = mapper.readValue(message.value(), OperationDto.class);
-            Assertions.assertNotNull(kafkaOperation);
-            Assertions.assertEquals(transferSum, kafkaOperation.getAmount());
-            Thread.sleep(500);
-        } catch (InterruptedException | JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        OperationDto messageDto = operationService.getOperationByIdWithDto(operation.getId());
+        Assertions.assertNotNull(messageDto);
+        Assertions.assertEquals(transferSum, messageDto.getAmount());
 
         final int index = 3;
         // чекаем историю операций
@@ -282,11 +258,6 @@ public class OperationUnitTest extends AbstractTest {
         Assertions.assertNotNull(targetDetails.getDetailItems());
         Assertions.assertEquals(1, targetDetails.getDetailItems().size());
         Assertions.assertEquals(transferSum, targetDetails.getDetailItems().get(0).getAmount());
-    }
-
-    @AfterAll
-    public void tearDown() {
-        container.stop();
     }
 
     private BankAccountDto makeSingleAccount(int userId) {
