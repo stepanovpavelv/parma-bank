@@ -8,7 +8,7 @@
 ### Список технологий:
 * Java 11 (lts version)
 * Maven/Gradle
-* Spring boot (core, data, jpa, security, web)
+* Spring boot (core, cache, data jpa, security, web)
 * Hibernate, JDBC
 * PostgreSQL + H2 (для unit/integration tests)
 * Liquibase db migration
