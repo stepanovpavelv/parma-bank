@@ -178,11 +178,11 @@ public class OperationUnitTest extends AbstractTest {
 
     @ParameterizedTest
     @CsvSource({
-            "10, 1, 2, 1000.0",
-            "1, 20, 2, 205.0",
+            "130, 1, 2, 1000.0",
+            "1, 210, 2, 205.0",
             "1, 2, 30, 58.5",
             "-1, , 1, 120.1",
-            "9, , 3, 19291.9"
+            "92, , 3, 19291.9"
     })
     @DisplayName("Tests would not be executed due to non-existing operation params.")
     @Order(4)

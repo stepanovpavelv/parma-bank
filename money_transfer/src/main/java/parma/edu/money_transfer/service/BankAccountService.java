@@ -1,8 +1,8 @@
 package parma.edu.money_transfer.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import parma.edu.money_transfer.dao.BankAccountRepository;
 import parma.edu.money_transfer.dto.BankAccountDto;
@@ -15,6 +15,8 @@ import static parma.edu.money_transfer.exception.BankingException.ForbiddenExcep
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Сервис для работы с банковскими счетами пользователей.
@@ -22,6 +24,9 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class BankAccountService {
+    @Value("${spring.kafka.consumer.latch-timeout}")
+    private Integer timeout;
+
     private final UserService userService;
     private final BankAccountKafkaConsumer bankAccountKafkaService;
     private final BankAccountRepository bankAccountRepository;
@@ -44,27 +49,30 @@ public class BankAccountService {
         return BankAccountMapper.INSTANCE.toListDto(accounts);
     }
 
-    @Transactional
     public BankAccountDto createBankAccount(Integer userId) {
         UserInfoDto dto = userService.readUserById(userId);
         if (dto == null) {
             throw new ForbiddenException("Пользователя с id=" + userId + " не существует");
         }
 
-        BankAccountDto newAccount = new BankAccountDto();
-        newAccount.setUserId(userId);
-        newAccount.setIsEnabled(true);
+        BankAccount savingAccount = new BankAccount();
+        savingAccount = bankAccountRepository.save(savingAccount);
 
-        bankAccountKafkaService.send(newAccount);
+        BankAccountDto newDto = new BankAccountDto();
+        newDto.setId(savingAccount.getId());
+        newDto.setUserId(userId);
+        newDto.setIsEnabled(true);
 
-        return newAccount;
+        saveAccountBlock(newDto, "Ошибка при создании счёта пользователя");
+
+        BankAccount savedAccount = getAccountById(newDto.getId());
+        return BankAccountMapper.INSTANCE.toDto(savedAccount);
     }
 
     public void setAccountState(Integer bankAccountId, boolean isEnabled) {
         BankAccountDto accountDto = getAccountByIdWithDto(bankAccountId);
         accountDto.setIsEnabled(isEnabled);
-
-        bankAccountKafkaService.send(accountDto);
+        saveAccountBlock(accountDto, "Ошибка при изменении активности счёта пользователя");
     }
 
     protected BankAccount getAccountById(Integer id) {
@@ -74,5 +82,19 @@ public class BankAccountService {
         }
 
         return accountOpt.get();
+    }
+
+    private void saveAccountBlock(BankAccountDto dto, String errorMessage) {
+        CountDownLatch latch = new CountDownLatch(1);
+        bankAccountKafkaService.setLatch(latch);
+        bankAccountKafkaService.send(dto);
+        try {
+            boolean isLatched = bankAccountKafkaService.getLatch().await(timeout, TimeUnit.SECONDS);
+            if (!isLatched) {
+                throw new ForbiddenException(errorMessage);
+            }
+        } catch (InterruptedException e) {
+            throw new ForbiddenException(errorMessage);
+        }
     }
 }

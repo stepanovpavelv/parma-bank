@@ -19,6 +19,7 @@ spring:
     consumer:
       group-id: server.operation.broadcast
       client-id: consumerServer
+      latch-timeout: 5
     producer:
       client-id: producerServer
   security:
