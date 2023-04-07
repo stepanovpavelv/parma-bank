@@ -37,6 +37,7 @@ public class BankAccountKafkaConsumer {
         kafkaOperationTemplate.send(topic, dto);
     }
 
+    @Transactional(value = "kafkaTransactionManager")
     @KafkaListener(id = "bank_account", topics = "#{'${additional-kafka.bank_account.topic}'}", containerFactory = "singleFactoryAccount")
     public void receive(BankAccountDto dataDto) {
         BankAccount account;

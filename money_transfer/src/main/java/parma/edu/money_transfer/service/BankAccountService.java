@@ -49,6 +49,7 @@ public class BankAccountService {
         return BankAccountMapper.INSTANCE.toListDto(accounts);
     }
 
+    @Transactional(value = "kafkaTransactionManager")
     public BankAccountDto createBankAccount(Integer userId) {
         UserInfoDto dto = userService.readUserById(userId);
         if (dto == null) {
@@ -69,6 +70,7 @@ public class BankAccountService {
         return BankAccountMapper.INSTANCE.toDto(savedAccount);
     }
 
+    @Transactional(value = "kafkaTransactionManager")
     public void setAccountState(Integer bankAccountId, boolean isEnabled) {
         BankAccountDto accountDto = getAccountByIdWithDto(bankAccountId);
         accountDto.setIsEnabled(isEnabled);

@@ -13,7 +13,7 @@ import parma.edu.money_transfer.service.UserService;
 /**
  * Базовый класс юнит-теста.
  */
-@EmbeddedKafka
+@EmbeddedKafka(brokerProperties = {"transaction.state.log.replication.factor=1", "transaction.state.log.min.isr=1"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(properties = "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}")
 public abstract class AbstractTest {

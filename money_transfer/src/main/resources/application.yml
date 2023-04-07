@@ -22,6 +22,7 @@ spring:
       latch-timeout: 5
     producer:
       client-id: producerServer
+      transaction-id-prefix: money-prefix-
   security:
     oauth2:
       client:

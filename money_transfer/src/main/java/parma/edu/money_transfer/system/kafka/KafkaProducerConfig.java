@@ -10,8 +10,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import parma.edu.money_transfer.dto.BankAccountDto;
-import parma.edu.money_transfer.dto.OperationDto;
 
 import java.util.Map;
 
@@ -23,26 +21,17 @@ public class KafkaProducerConfig {
     @Value("${spring.kafka.producer.client-id}")
     private String kafkaClientId;
 
+    @Value("${spring.kafka.producer.transaction-id-prefix}")
+    private String transactionPrefix;
+
     @Bean
-    public ProducerFactory<Integer, BankAccountDto> producerOperationFactoryAccount() {
+    public ProducerFactory<Integer, ?> producerOperationFactoryAccount() {
         return new DefaultKafkaProducerFactory<>(producerConfigs());
     }
 
     @Bean
-    public KafkaTemplate<Integer, BankAccountDto> kafkaTemplateAccount() {
-        KafkaTemplate<Integer, BankAccountDto> template = new KafkaTemplate<>(producerOperationFactoryAccount());
-        template.setMessageConverter(new StringJsonMessageConverter());
-        return template;
-    }
-
-    @Bean
-    public ProducerFactory<Integer, OperationDto> producerOperationFactoryOperation() {
-        return new DefaultKafkaProducerFactory<>(producerConfigs());
-    }
-
-    @Bean
-    public KafkaTemplate<Integer, OperationDto> kafkaTemplate() {
-        KafkaTemplate<Integer, OperationDto> template = new KafkaTemplate<>(producerOperationFactoryOperation());
+    public KafkaTemplate<Integer, ?> kafkaTemplateAccount() {
+        KafkaTemplate<Integer, ?> template = new KafkaTemplate<>(producerOperationFactoryAccount());
         template.setMessageConverter(new StringJsonMessageConverter());
         return template;
     }
@@ -53,7 +42,8 @@ public class KafkaProducerConfig {
                 ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServer,
                 ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class,
                 ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class,
-                ProducerConfig.CLIENT_ID_CONFIG, kafkaClientId
+                ProducerConfig.CLIENT_ID_CONFIG, kafkaClientId,
+                ProducerConfig.TRANSACTIONAL_ID_CONFIG, transactionPrefix
         );
     }
 }
