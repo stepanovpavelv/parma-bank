@@ -59,15 +59,13 @@ public class BankAccountService {
         BankAccount savingAccount = new BankAccount();
         savingAccount = bankAccountRepository.save(savingAccount);
 
-        BankAccountDto newDto = new BankAccountDto();
-        newDto.setId(savingAccount.getId());
-        newDto.setUserId(userId);
-        newDto.setIsEnabled(true);
+        BankAccountDto savingDto = BankAccountMapper.INSTANCE.toDto(savingAccount);
+        savingDto.setUserId(userId);
+        savingDto.setIsEnabled(true);
 
-        saveAccountBlock(newDto, "Ошибка при создании счёта пользователя");
+        saveAccountBlock(savingDto, "Ошибка при создании счёта пользователя");
 
-        BankAccount savedAccount = getAccountById(newDto.getId());
-        return BankAccountMapper.INSTANCE.toDto(savedAccount);
+        return savingDto;
     }
 
     @Transactional(value = "kafkaTransactionManager")
